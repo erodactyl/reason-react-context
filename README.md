@@ -21,15 +21,22 @@ Note that any hot reload on a route will fall back to the root (`/`), so `Reason
 
 To use a port other than 8000 set the `PORT` environment variable (`PORT=8080 npm run server`).
 
-## Build for Production
+## Functors
 
-```sh
-npm run build
-npm run webpack:production
-```
+Each React component is a module in ReasonReact. Unfortunately, modules can't be simply pass to or returned from functions, as they are on another layer of the language. You can read more about this [here](https://reasonml.github.io/docs/en/module#docsNav)
 
-This will replace the development artifact `build/Index.js` for an optimized version as well as copy `src/index.html` into `build/`. You can then deploy the contents of the `build` directory (`index.html` and `Index.js`).
+So, to bypass this, we will need to use a Functor, which is a language construct, similar to functions, that taked a module and returns a module. Unlike functions, there is no type inference in functor argument type, so we have to manually add it ourselves. That's why we have the module type in the ContextConfig in ReasonContext.re file.
 
-If you make use of routing (via `ReasonReact.Router` or similar logic) ensure that server-side routing handles your routes or that 404's are directed back to `index.html` (which is how the dev server is set up).
+## ReasonContext
 
-**To enable dead code elimination**, change `bsconfig.json`'s `package-specs` `module` from `"commonjs"` to `"es6"`. Then re-run the above 2 commands. This will allow Webpack to remove unused code.
+Inside our Context module we define a mutable variable "state", and modules Provider and Consumer, which are both React components. The state variable is where we keep the value of the context, and we want all components dependednt on it to rerender when we change the state. So we add a subscribers array, subscibe function that returns the unsubscribe function, and a setState function to the module, which sets the new state and iterates over the subscribers, signaling them that the state changed and they need to rerender.
+
+We call this setState function every time in the didUpdate record field of the Provider make function, and we subscribe in the didMount record field in the Consumer make function. These are the usual ReasonReact lifecycle, you can read more about them [here](https://reasonml.github.io/reason-react/docs/en/lifecycles.html).
+
+### onUnmount
+
+It's important not to forget to unsubscribe when the comopnent unmounts. The onUnmount function destructured in the didMount arguments is simply a subscribtion helper for the willUnmount record field to reduce boilerplate code, you can read more about it [here](https://reasonml.github.io/reason-react/docs/en/subscriptions-helper#docsNav).
+
+## Usage
+
+We use this context in the same way as we would use the React context. A functional difference is that we haven't implemented the logic to nest Providers and take the values of the last one. Syntactically, we have to use ...(children) to make the types match, you can read more about that [here](https://reasonml.github.io/reason-react/docs/en/children#children-spread).
