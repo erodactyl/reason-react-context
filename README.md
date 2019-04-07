@@ -31,7 +31,7 @@ So, to bypass this, we will need to use a Functor, which is a language construct
 
 Inside our Context module we define a mutable variable "state", and modules Provider and Consumer, which are both React components. The state variable is where we keep the value of the context, and we want all components dependednt on it to rerender when we change the state. So we add a subscribers array, subscibe function that returns the unsubscribe function, and a setState function to the module, which sets the new state and iterates over the subscribers, signaling them that the state changed and they need to rerender.
 
-We call this setState function every time in the didUpdate record field of the Provider make function, and we subscribe in the didMount record field in the Consumer make function. These are the usual ReasonReact lifecycle, you can read more about them [here](https://reasonml.github.io/reason-react/docs/en/lifecycles.html).
+We call this setState function every time in the didUpdate record field of the Provider make function, and we subscribe in the didMount record field in the Consumer make function. The subscibe method is a simple flip of the state boolean variable, a kind of replacement for forceUpdate. These are the usual ReasonReact lifecycle, you can read more about them [here](https://reasonml.github.io/reason-react/docs/en/lifecycles.html).
 
 ### onUnmount
 
